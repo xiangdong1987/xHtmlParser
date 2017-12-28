@@ -18,7 +18,7 @@ struct xNode {
     std::string tag = "text";
     map<int, std::string> _;
     std::size_t tag_start;
-    Tree *dom = nullptr;
+    class Tree *dom;
     int nodetype;
 };
 

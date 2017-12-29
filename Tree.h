@@ -12,7 +12,7 @@ using namespace std;
 
 class Tree {
 public:
-    vector<class Node> nodes;
+    vector<struct xNode> nodes;
     std::string nowChar;
     std::size_t pos;
     std::size_t size;
@@ -29,9 +29,8 @@ public:
     map<std::string, int> blockTags;
     map<std::string, int> selfCloseTags;
 
-    class Node *root;
-
-    class Node *parent;
+    struct xNode *root;
+    struct xNode *parent;
 
     //dom类型
     enum {
@@ -138,12 +137,11 @@ public:
 
     bool readTag();
 
-    void parseAttr(Node node, std::string name, map<int, std::string> &space);
+    void parseAttr(struct xNode *node, std::string name, map<int, std::string> &space);
 
     bool asTextNode(std::string str);
 
-    void linkNodes(class Node &node, bool isChild);
-
+    void linkNodes(struct xNode *node, bool isChild);
 
     std::string nextChar();
 

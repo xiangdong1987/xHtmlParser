@@ -12,9 +12,8 @@
 int main(int argc, const char * argv[]) {
     // insert code here...
     Tree tree;
-    std::string xdd= "123232<div>xdd</div><font>123</font>";
+    std::string xdd= "123232<div><font>你好</font></div><font>123</font>";
     tree.load(xdd);
     tree.dump(true);
-
     return 0;
 }

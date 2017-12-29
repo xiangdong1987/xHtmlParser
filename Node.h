@@ -8,17 +8,24 @@
 #include "Tree.h"
 
 using namespace std;
+
 /**
  * 定义节点结构体
  */
 struct xNode {
     xNode *parent;
-    vector<xNode> nodes;
-    vector<xNode> children;
+    vector<xNode *> nodes;
+    vector<xNode *> children;
     std::string tag = "text";
     map<int, std::string> _;
     std::size_t tag_start;
+    std::size_t endCursor;
+    map<std::string, std::string> attr;
+
+    void dump(bool isShowAttr = true, int deep = 0);
+
     class Tree *dom;
+
     int nodetype;
 };
 

@@ -3,7 +3,7 @@
 //
 
 #include "Tree.h"
-
+struct xNode rootNode;
 //初始化类
 Tree::Tree() {
     this->optionalClosingTags = this->createOptionalClosingTags();
@@ -110,7 +110,7 @@ bool Tree::readTag() {
             //父标签是选择性关闭标签并且 当前变标签是块标签
             if (this->optionalClosingTags.count(parentLow) > 0 && this->blockTags.count(tagLow) > 0) {
                 this->parent->_[t_end] = "";
-                Node *org_parent = this->parent;
+                struct xNode *org_parent = this->parent;
                 //循环查找父标签 知道找到与当前标签相同的标签
                 while ((this->parent->parent) && parentLow != tagLow) {
                     this->parent = this->parent->parent;
@@ -126,7 +126,7 @@ bool Tree::readTag() {
                 //父标签不是选择性关闭标签 并且存在父父节点 ，标签是块标签
             } else if ((this->parent->parent) && this->blockTags.count(tagLow) > 0) {
                 //this->parent->_[t_end] = "";
-                Node *org_parent = this->parent;
+                struct xNode *org_parent = this->parent;
 
                 while ((this->parent->parent) && parentLow != tagLow) {
                     this->parent = this->parent->parent;
@@ -153,24 +153,24 @@ bool Tree::readTag() {
         this->nowChar = this->nextChar();
         return true;
     }
-    Node node(this);
-    node._[t_begin] = this->cursor;
+    struct xNode *node=new xNode();
+    node->_[t_begin] = this->cursor;
     ++this->cursor;
     std::string tag = this->copyUntil(this->token_slash);
-    node.tag_start = begin_tag_pos;
+    node->tag_start = begin_tag_pos;
     //判断是否是注释
     if (tag.length() > 0 && tag.substr(0, 1) == "!") {
-        node._[t_text] = "<" + tag + this->copyUntilChar(">");
+        node->_[t_text] = "<" + tag + this->copyUntilChar(">");
         if (tag.length() > 3 && tag.substr(1, 1) == "-"
             && tag.substr(2, 1) == "-") {
-            node.nodetype = t_comment;
-            node.tag = "comment";
+            node->nodetype = t_comment;
+            node->tag = "comment";
         } else {
-            node.nodetype = t_unknow;
-            node.tag = "unkonw";
+            node->nodetype = t_unknow;
+            node->tag = "unkonw";
         }
         if (this->nowChar == ">") {
-            node._[t_text] += ">";
+            node->_[t_text] += ">";
         }
         this->linkNodes(node, true);
         this->nowChar = this->nextChar();
@@ -178,8 +178,8 @@ bool Tree::readTag() {
     }
     //判断是否是内容
     if (tag.find('<') != std::string::npos) {
-        tag = '<' + tag.substr(0, -1);
-        node._[t_text] = tag;
+        tag = '<' + tag.substr(0, (unsigned long) -1);
+        node->_[t_text] = tag;
         this->linkNodes(node, false);
         this->preChar();
     }
@@ -187,13 +187,13 @@ bool Tree::readTag() {
     regex reg("\\w+");
     smatch r;
     if (!regex_match(tag, r, reg)) {
-        node._[t_text] = "<" + tag + this->copyUntil("<>");
+        node->_[t_text] = "<" + tag + this->copyUntil("<>");
         if (this->nowChar == "<") {
             this->linkNodes(node, false);
             return true;
         }
         if (this->nowChar == ">") {
-            node._[t_text] += '>';
+            node->_[t_text] += '>';
         }
         this->linkNodes(node, false);
         this->nowChar = this->nextChar();
@@ -206,16 +206,16 @@ bool Tree::readTag() {
     std::string tagLow;
     tagLow.resize(tag.size());
     std::transform(tag.begin(), tag.end(), tagLow.begin(), ::tolower);
-    node.nodetype = t_element;
+    node->nodetype = t_element;
     std::string tag_lower = tagLow;
-    node.tag = tag_lower;
+    node->tag = tag_lower;
     //处理可选关闭标签
     if (this->optionalClosingTags.count(parentLow) > 0) {
         while (this->optionalClosingTags.count(parentLow) > 0) {
             this->parent->_[t_end] = "";
             this->parent = this->parent->parent;
         }
-        node.parent = this->parent;
+        node->parent = this->parent;
     }
     //警卫防止死循环
     std::size_t guard = 0;
@@ -235,18 +235,18 @@ bool Tree::readTag() {
         }
         guard = this->pos;
         if (this->pos >= this->size - 1 && this->nowChar != ">") {
-            node.nodetype = t_text;
-            node._[t_end] = "";
-            node._[t_text] = "<" + tag + space[0] + name;
-            node.tag = "text";
+            node->nodetype = t_text;
+            node->_[t_end] = "";
+            node->_[t_text] = "<" + tag + space[0] + name;
+            node->tag = "text";
             this->linkNodes(node, false);
             return true;
         }
         if (this->doc.substr(this->pos - 1, 1) == "<") {
-            node.nodetype = t_text;
-            node.tag = "text";
-            node._[t_end] = "";
-            node._[t_text] = this->doc.substr(begin_tag_pos, this->pos - begin_tag_pos - 1);
+            node->nodetype = t_text;
+            node->tag = "text";
+            node->_[t_end] = "";
+            node->_[t_text] = this->doc.substr(begin_tag_pos, this->pos - begin_tag_pos - 1);
             this->pos -= 2;
             this->nowChar = this->nextChar();
             this->linkNodes(node, false);
@@ -260,7 +260,7 @@ bool Tree::readTag() {
                 //解析标签内元素
                 this->parseAttr(node, name, space);
             } else {
-                node.attr[name] = true;
+                node->attr[name] = true;
                 if (this->nowChar != ">") {
                     this->nowChar = this->preChar();
                 }
@@ -272,53 +272,53 @@ bool Tree::readTag() {
     } while (this->nowChar != ">" && this->nowChar != "/");
     this->linkNodes(node, true);
     if (this->copyUntilCharEscape(">") == "/") {
-        node._[t_endspace] += "/";
-        node._[t_end] = "";
+        node->_[t_endspace] += "/";
+        node->_[t_end] = "";
     } else {
         if (this->selfCloseTags.count(tagLow) <= 0) {
             //cout << node.tag << "\n";
-            this->parent = &node;
+            this->parent = node;
         }
     }
     this->nowChar = this->nextChar();
-    if (node.tag == "br") {
+    if (node->tag == "br") {
 
     }
     return true;
 }
 
-void Tree::parseAttr(Node node, std::string name, map<int, std::string> &space) {
-    if (node.attr.count(name) > 0) {
+void Tree::parseAttr(struct xNode *node, std::string name, map<int, std::string> &space) {
+    if (node->attr.count(name) > 0) {
         return;
     }
     space[2] = this->copySkip(this->token_blank);
     if (this->nowChar == "\"") {
         this->nowChar = this->nextChar();
-        node.attr[name] = this->copyUntilCharEscape("\"");
+        node->attr[name] = this->copyUntilCharEscape("\"");
         this->nowChar = this->nextChar();
     } else if (this->nowChar == "\'") {
         this->nowChar = this->nextChar();
-        node.attr[name] = this->copyUntilCharEscape("\'");
+        node->attr[name] = this->copyUntilCharEscape("\'");
         this->nowChar = this->nextChar();
     } else {
-        node.attr[name] = this->copyUntil(this->token_attr);
+        node->attr[name] = this->copyUntil(this->token_attr);
     }
-    string_replace(node.attr[name], "\r", "");
-    string_replace(node.attr[name], "\n", "");
+    string_replace(node->attr[name], "\r", "");
+    string_replace(node->attr[name], "\n", "");
     if (name == "class") {
-        node.attr[name] = trim(node.attr[name]);
+        node->attr[name] = trim(node->attr[name]);
     }
 }
 
 bool Tree::asTextNode(std::string str) {
-    Node node(this);
+    xNode node;
     ++this->cursor;
     node._[t_text] = "</" + str + ">";
     return true;
 }
 
-void Tree::linkNodes(class Node &node, bool isChild) {
-    node.parent = this->parent;
+void Tree::linkNodes(struct xNode *node, bool isChild) {
+    node->parent = this->parent;
     this->parent->nodes.push_back(node);
     if (isChild) {
         this->parent->children.push_back(node);
@@ -345,7 +345,7 @@ void Tree::prepare(std::string str) {
     this->doc = str;
     this->pos = 0;
     this->cursor = 1;
-    this->root = new Node(this);
+    this->root = &rootNode;
     this->root->tag = "root";
     this->parent = this->root;
     if (this->size > 0) {
@@ -365,9 +365,10 @@ bool Tree::parse() {
     if ((s = this->copyUntilChar("<")) == "") {
         return this->readTag();
     }
-    Node node(this);
+    struct xNode *node = new xNode();
+    node->parent = this->parent;
     ++this->cursor;
-    node._[t_text] = s;
+    node->_[t_text] = s;
     this->linkNodes(node, false);
     return true;
 }
